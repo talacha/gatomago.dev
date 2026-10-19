@@ -62,6 +62,14 @@ export const post = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
+    defineField({
+      name: 'notifySubscribers',
+      type: 'boolean',
+      title: 'Email subscribers when published',
+      description:
+        'Sends the newsletter to confirmed subscribers (in this post\'s language) the first time it is published. It is only ever sent once per post.',
+      initialValue: true,
+    }),
     defineField({name: 'body', type: 'blockContent'}),
     defineField({name: 'seo', type: 'seo'}),
   ],

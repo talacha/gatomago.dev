@@ -18,6 +18,12 @@ export function SiteFooter({ lang, t }: { lang: Locale; t: Dictionary }) {
         >
           RSS
         </Link>
+        <Link
+          href={`${localePath(lang)}/privacy`}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center"
+        >
+          {t.footer.privacy}
+        </Link>
         <a
           href={AUTHOR.linkedin}
           rel="me noopener"
