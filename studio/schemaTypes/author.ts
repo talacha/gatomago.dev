@@ -16,8 +16,8 @@ export const author = defineType({
     defineField({name: 'image', type: 'image', options: {hotspot: true}}),
     defineField({
       name: 'bio',
-      type: 'array',
-      of: [defineField({name: 'block', type: 'block'})],
+      type: 'internationalizedArraySimpleBlockContent',
+      description: 'Translated per language. The English value is the fallback.',
     }),
     defineField({name: 'linkedin', type: 'url', title: 'LinkedIn URL'}),
   ],

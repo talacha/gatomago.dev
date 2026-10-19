@@ -4,7 +4,7 @@ Usage: python3 design/make-brand-assets.py <font-dir>
   <font-dir> must contain cinzel.ttf (Cinzel Decorative Bold), cormorant.ttf and
   cormorant-italic.ttf (Cormorant Garamond variable) and ogham.ttf (Noto Sans Ogham),
   all from github.com/google/fonts (OFL).
-Writes icons into web/src/app, plus web/public/icon-512.png and web/public/og-en.jpg.
+Writes icons into web/src/app, plus web/public/icon-512.png and web/public/og-{en,es}.jpg.
 """
 import math
 import sys
@@ -128,7 +128,24 @@ def spaced(draw, xy, text, fnt, fill, tracking):
     return x
 
 
-def og_card():
+COPY = {
+    "en": {
+        "lead": "Discover the",
+        "em": "magic",
+        "sub": ["Essays, charms and field notes from", "the candlelit study of Juan Luis Villaseñor."],
+        "cta": "Enter the study",
+    },
+    "es": {
+        "lead": "Descubre la",
+        "em": "magia",
+        "sub": ["Ensayos, hechizos y notas de campo", "de Juan Luis Villaseñor, a la luz de las velas."],
+        "cta": "Entra al estudio",
+    },
+}
+
+
+def og_card(lang="en"):
+    copy = COPY[lang]
     S = 2  # supersample
     W, H = 1200 * S, 630 * S
     img = Image.new("RGB", (W, H), INK)
@@ -184,19 +201,19 @@ def og_card():
     # headline
     big = font("cormorant.ttf", 118 * S, 600)
     big_i = font("cormorant-italic.ttf", 118 * S, 600)
-    d.text((78 * S, 178 * S), "Discover the", font=big, fill=PARCH)
-    d.text((78 * S, 285 * S), "magic", font=big_i, fill=GOLD)
+    d.text((78 * S, 178 * S), copy["lead"], font=big, fill=PARCH)
+    d.text((78 * S, 285 * S), copy["em"], font=big_i, fill=GOLD)
 
     # supporting line
     sub = font("cormorant.ttf", 33 * S, 500)
-    d.text((82 * S, 438 * S), "Essays, charms and field notes from", font=sub, fill=MUTED)
-    d.text((82 * S, 477 * S), "the candlelit study of Juan Luis Villaseñor.", font=sub, fill=MUTED)
+    d.text((82 * S, 438 * S), copy["sub"][0], font=sub, fill=MUTED)
+    d.text((82 * S, 477 * S), copy["sub"][1], font=sub, fill=MUTED)
 
     # CTA pill + domain
     pill = (82 * S, 544 * S, 316 * S, 592 * S)
     d.rounded_rectangle(pill, radius=24 * S, fill=GOLD)
     cta = font("cormorant.ttf", 28 * S, 700)
-    label = "Enter the study"
+    label = copy["cta"]
     tw = d.textlength(label, font=cta)
     d.text((pill[0] + (pill[2] - pill[0] - tw) / 2, pill[1] + 6 * S), label, font=cta, fill=INK)
     d.text((340 * S, 549 * S), "gatomago.dev", font=font("cormorant.ttf", 28 * S, 600), fill=PARCH)
@@ -206,9 +223,9 @@ def og_card():
 
 def main():
     write_favicons()
-    card = og_card()
-    # Served from /public at a stable URL so pages can reference it explicitly with alt text.
-    card.save(ROOT / "web" / "public" / "og-en.jpg", quality=90, optimize=True)
+    # Served from /public at stable per-language URLs so pages can set them explicitly with alt text.
+    for lang in COPY:
+        og_card(lang).save(ROOT / "web" / "public" / f"og-{lang}.jpg", quality=90, optimize=True)
     print("done")
 
 
