@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #14161d;
+  --color-void: #10121a;
+  --color-panel: #1c1f2a;
+  --color-parch: #eadfc4;
+  --color-muted: #b9ae98;
+  --color-gold: #e2b25c;
+  --color-gold-light: #f3d58f;
+  --color-teal: #6fd6c9;
+
+  --font-display: var(--font-cinzel), serif;
+  --font-heading: var(--font-cormorant), Georgia, serif;
+  --font-body: var(--font-spectral), Georgia, serif;
+  --font-ogham: var(--font-ogham), serif;
+}
+
+html {
+  background: var(--color-ink);
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-parch);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--color-gold);
+}
+
+/* Article body from Portable Text */
+.prose-gm > p:first-of-type::first-letter {
+  float: left;
+  margin: 6px 14px 0 0;
+  font-family: var(--font-display);
+  font-size: 84px;
+  line-height: 0.8;
+  color: var(--color-gold);
+}
+.prose-gm a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-gm ul,
+.prose-gm ol {
+  padding-left: 1.4em;
+}
+.prose-gm ul {
+  list-style: disc;
+}
+.prose-gm ol {
+  list-style: decimal;
+}
+.prose-gm code:not(pre code) {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--color-void);
+  font-size: 0.9em;
+}
