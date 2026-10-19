@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { KnotDivider, Moon, Spark } from "@/components/glyphs";
+import { KnotDivider, Moon, Spark, Triskele } from "@/components/glyphs";
 import { JsonLd } from "@/components/json-ld";
 import { Newsletter } from "@/components/newsletter";
 import { meta, PostCard } from "@/components/post-card";
+import { SparkleField } from "@/components/sparkle-field";
 import { absoluteUrl, AUTHOR, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { getAuthor, getPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
@@ -17,9 +18,9 @@ export const metadata: Metadata = {
 };
 
 const ctaPrimary =
-  "inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-ink hover:text-ink";
+  "inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink hover:shadow-[0_8px_30px_rgba(226,178,92,0.3)]";
 const ctaGhost =
-  "inline-flex min-h-12 items-center rounded-full border-[1.5px] border-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-gold";
+  "inline-flex min-h-12 items-center rounded-full border-[1.5px] border-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-gold transition duration-300 hover:-translate-y-0.5 hover:bg-gold/10 hover:text-gold-light";
 
 export default async function HomePage() {
   const [posts, author] = await Promise.all([getPosts(), getAuthor()]);
@@ -71,23 +72,24 @@ export default async function HomePage() {
   return (
     <>
       <JsonLd data={graph} />
-      <section className="flex flex-wrap items-center gap-14 pb-22 pt-18">
-        <div className="min-w-0 flex-[1_1_440px]">
+      <section className="relative flex flex-wrap items-center gap-x-14 gap-y-12 pb-22 pt-12 sm:pt-18">
+        <SparkleField />
+        <div className="relative min-w-0 flex-[1_1_440px]">
           <div
             aria-hidden="true"
-            className="flex items-center gap-3 font-ogham text-[22px] tracking-[0.2em] text-gold"
+            className="flex items-center gap-3 font-ogham text-[22px] tracking-[0.2em] text-gold motion-safe:animate-reveal"
           >
             <Spark size={18} />
             <span>ᚌᚐᚈᚑ ᚋᚐᚌᚑ</span>
           </div>
-          <h1 className="mt-5 font-heading text-[clamp(48px,7vw,76px)] font-semibold leading-none tracking-tight text-parch">
+          <h1 className="mt-5 font-heading motion-safe:animate-reveal [animation-delay:120ms] text-[clamp(48px,7vw,76px)] font-semibold leading-none tracking-tight text-parch">
             Dispatches from the <em className="text-gold">candlelit study</em>
           </h1>
-          <p className="mt-7 max-w-[520px] text-xl text-muted">
+          <p className="mt-7 max-w-[520px] text-xl text-muted motion-safe:animate-reveal [animation-delay:240ms]">
             Essays, charms and field notes by Juan Luis Villaseñor, known in these halls as Gato
             Mago. Read by candlelight; no broomstick required.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap gap-4 motion-safe:animate-reveal [animation-delay:360ms]">
             <Link href={featured ? `/posts/${featured.slug}` : "/#grimoire"} className={ctaPrimary}>
               Read the latest
             </Link>
@@ -96,8 +98,8 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-        <div className="relative min-w-[280px] flex-[0_1_460px]">
-          <div className="rounded-[240px_240px_14px_14px] border-2 border-gold p-2.5 shadow-[0_0_90px_rgba(111,214,201,0.16)]">
+        <div className="relative min-w-[280px] flex-[0_1_460px] motion-safe:animate-reveal [animation-delay:200ms]">
+          <div className="rounded-[240px_240px_14px_14px] border-2 border-gold p-2.5 shadow-[0_0_90px_rgba(111,214,201,0.16)] motion-safe:animate-glow">
             <Image
               src="/gato-mago.jpg"
               alt="Gato Mago, a grey cat in a patched wizard hat, holding a glowing crystal orb in a candlelit library"
@@ -108,9 +110,9 @@ export default async function HomePage() {
               className="aspect-[1/1.18] w-full rounded-[230px_230px_6px_6px] object-cover object-[55%_40%]"
             />
           </div>
-          <Spark size={26} className="absolute left-[-14px] top-[6%] text-teal" />
-          <Spark size={16} className="absolute right-[-10px] top-[22%] text-gold" />
-          <Moon size={34} className="absolute bottom-[14%] right-[-18px] text-gold" />
+          <Spark size={26} className="absolute left-[-14px] top-[6%] text-teal motion-safe:animate-twinkle" />
+          <Spark size={16} className="absolute right-[-10px] top-[22%] text-gold motion-safe:animate-twinkle [animation-delay:1.3s]" />
+          <Moon size={34} className="absolute bottom-[14%] right-[-18px] text-gold motion-safe:animate-float" />
         </div>
       </section>
 
@@ -124,7 +126,7 @@ export default async function HomePage() {
           </div>
           <Link
             href={`/posts/${featured.slug}`}
-            className="flex flex-wrap overflow-hidden rounded-[18px] border border-gold/35 bg-panel text-parch hover:text-parch"
+            className="group flex flex-wrap overflow-hidden rounded-[18px] border border-gold/40 bg-panel text-parch transition duration-300 hover:border-gold hover:text-parch hover:shadow-[0_12px_50px_rgba(226,178,92,0.12)]"
           >
             <div className="relative flex min-h-80 flex-[1_1_340px] items-center justify-center border-r border-gold/20 bg-void text-gold">
               {featured.mainImage?.asset ? (
@@ -136,24 +138,14 @@ export default async function HomePage() {
                   className="object-cover"
                 />
               ) : (
-                <svg width="190" height="190" viewBox="-30 -30 60 60" aria-hidden="true">
-                  <g fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-                    {[0, 120, 240].map((deg) => (
-                      <path
-                        key={deg}
-                        d="M0 0 C0 -9 8 -14 15 -10 C23 -5 22 8 12 12 C6 14 -1 11 -2 5"
-                        transform={`rotate(${deg})`}
-                      />
-                    ))}
-                  </g>
-                </svg>
+                <Triskele size={190} weight={1.6} className="transition-transform duration-700 group-hover:rotate-[24deg]" />
               )}
             </div>
-            <div className="flex flex-[1.4_1_420px] flex-col justify-center gap-4 p-12">
+            <div className="flex flex-[1.4_1_420px] flex-col justify-center gap-4 p-8 sm:p-12">
               <div className="font-heading text-lg font-semibold uppercase tracking-[0.18em] text-gold">
                 {[featured.category, meta(featured)].filter(Boolean).join(" · ")}
               </div>
-              <h3 className="font-heading text-[44px] font-semibold leading-[1.1]">
+              <h3 className="font-heading text-[clamp(32px,5vw,44px)] font-semibold leading-[1.1] text-parch">
                 {featured.title}
               </h3>
               {featured.excerpt && <p className="text-muted">{featured.excerpt}</p>}
@@ -164,7 +156,7 @@ export default async function HomePage() {
       )}
 
       <section id="grimoire" className="scroll-mt-8 pb-24">
-        <h2 className="mb-8 font-heading text-[46px] font-semibold text-parch">
+        <h2 className="mb-8 font-heading text-[clamp(34px,5vw,46px)] font-semibold leading-tight text-parch">
           From the Grimoire
         </h2>
         {rest.length > 0 ? (
@@ -210,7 +202,7 @@ export default async function HomePage() {
           <div aria-hidden="true" className="font-ogham text-xl tracking-[0.2em] text-gold">
             ᚔᚒᚐᚅ ᚂᚒᚔᚄ
           </div>
-          <h2 className="mt-3 font-heading text-[46px] font-semibold leading-[1.1] text-parch">
+          <h2 className="mt-3 font-heading text-[clamp(34px,5vw,46px)] font-semibold leading-[1.1] text-parch">
             Behind the hat: {author?.name ?? "Juan Luis Villaseñor"}
           </h2>
           <p className="mt-5 max-w-[620px] text-muted">
@@ -222,7 +214,8 @@ export default async function HomePage() {
               href={
                 author?.linkedin ?? "https://www.linkedin.com/in/juanluisvillase%C3%B1or/"
               }
-              className="py-2"
+              rel="me noopener"
+              className="inline-flex min-h-11 items-center"
             >
               LinkedIn →
             </a>

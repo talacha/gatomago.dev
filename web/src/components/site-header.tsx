@@ -9,24 +9,34 @@ const nav = [
 export function SiteHeader() {
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 py-7">
-        <Link href="/" className="flex items-center gap-3.5 text-parch hover:text-parch">
-          <Triskele size={40} className="text-gold" />
+      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-1 py-4 sm:py-6">
+        <Link
+          href="/"
+          aria-label="Gato Mago, home"
+          className="group flex min-h-11 items-center gap-3.5 text-parch hover:text-parch"
+        >
+          <Triskele
+            size={40}
+            className="text-gold transition-transform duration-700 ease-out group-hover:rotate-120"
+          />
           <span className="font-display text-[26px] font-bold tracking-wide">Gato Mago</span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-x-8 gap-y-2 font-heading text-xl font-semibold tracking-wide">
+        <nav
+          aria-label="Main"
+          className="flex flex-wrap items-center gap-x-4 font-heading text-lg font-semibold tracking-wide sm:gap-x-8 sm:text-xl"
+        >
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="py-2.5 text-[#d9cfb8] hover:text-gold-light"
+              className="inline-flex min-h-11 items-center text-[#d9cfb8] hover:text-gold-light"
             >
               {item.label}
             </Link>
           ))}
           <Link
             href="/#circle"
-            className="rounded-full border-[1.5px] border-gold px-5 py-2.5 text-gold hover:text-gold-light"
+            className="inline-flex min-h-11 items-center rounded-full border-[1.5px] border-gold px-4 text-gold sm:px-5 transition-colors hover:bg-gold hover:text-ink"
           >
             Join the Circle
           </Link>

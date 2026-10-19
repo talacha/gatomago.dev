@@ -114,7 +114,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
     <>
       <JsonLd data={graph} />
       <article className="mx-auto max-w-[720px] pb-10 pt-18">
-        <Link href="/" className="inline-block py-2 font-heading text-[19px] font-semibold">
+        <Link href="/" className="inline-flex min-h-11 items-center font-heading text-[19px] font-semibold">
           ← Back to the grimoire
         </Link>
 
@@ -197,7 +197,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
           <KnotDivider className="max-w-[220px]" />
         </div>
 
-        <div className="mt-12 flex flex-wrap items-center gap-6 rounded-2xl border border-gold/35 bg-panel p-8">
+        <div className="mt-12 flex flex-wrap items-center gap-6 rounded-2xl border border-gold/40 bg-panel p-8">
           <div className="flex-[1_1_280px]">
             <div className="font-heading text-[26px] font-semibold text-parch">
               Enjoyed this entry?
@@ -206,7 +206,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
           </div>
           <Link
             href="/#circle"
-            className="inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold text-ink hover:text-ink"
+            className="inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink"
           >
             Join the Circle
           </Link>

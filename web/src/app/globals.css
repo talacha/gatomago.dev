@@ -14,10 +14,66 @@
   --font-heading: var(--font-cormorant), Georgia, serif;
   --font-body: var(--font-spectral), Georgia, serif;
   --font-ogham: var(--font-ogham), serif;
+
+  --animate-twinkle: twinkle 4s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-reveal: reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-glow: glow 7s ease-in-out infinite;
+  --animate-drift: spin 60s linear infinite;
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.12;
+      transform: scale(0.6) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1) rotate(25deg);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes glow {
+    0%,
+    100% {
+      box-shadow: 0 0 70px rgba(111, 214, 201, 0.12);
+    }
+    50% {
+      box-shadow: 0 0 110px rgba(240, 168, 48, 0.24);
+    }
+  }
 }
 
 html {
   background: var(--color-ink);
+  color-scheme: dark;
+  font-variant-numeric: lining-nums;
+  scroll-padding-top: 24px;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -28,8 +84,48 @@ body {
   line-height: 1.65;
 }
 
-a {
-  color: var(--color-gold);
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+/* In a layer so Tailwind utilities (text-parch, text-ink...) can override link colour. */
+@layer base {
+  a {
+    color: var(--color-gold);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-gold-light);
+  }
+}
+
+/* Visible keyboard focus: the browser default (dark blue) is ~2:1 on this background. */
+* {
+  outline-color: var(--color-gold-light);
+}
+:focus-visible {
+  outline: 3px solid var(--color-gold-light);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+input:focus-visible {
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+main:focus {
+  outline: none;
+}
+
+/* Users who ask for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Article body from Portable Text */

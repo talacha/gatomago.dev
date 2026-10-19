@@ -4,7 +4,7 @@ Usage: python3 design/make-brand-assets.py <font-dir>
   <font-dir> must contain cinzel.ttf (Cinzel Decorative Bold), cormorant.ttf and
   cormorant-italic.ttf (Cormorant Garamond variable) and ogham.ttf (Noto Sans Ogham),
   all from github.com/google/fonts (OFL).
-Writes icons and the OG and Twitter images into web/src/app.
+Writes icons and the OG and Twitter images into web/src/app (plus web/public/icon-512.png).
 """
 import math
 import sys
@@ -102,6 +102,7 @@ def favicon_master(size=1024):
 def write_favicons():
     master = favicon_master()
     master.resize((192, 192), Image.LANCZOS).save(APP / "icon.png", optimize=True)
+    master.resize((512, 512), Image.LANCZOS).save(ROOT / "web" / "public" / "icon-512.png", optimize=True)
     # Apple touch icon: full-bleed, iOS rounds the corners itself
     flat = Image.new("RGB", master.size, INK)
     flat.paste(master, mask=master.split()[3])

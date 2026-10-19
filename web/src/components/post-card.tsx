@@ -23,7 +23,7 @@ export function meta(post: Pick<PostSummary, "publishedAt" | "readMinutes">) {
 
 const fallbacks = [
   <Moon key="moon" size={86} />,
-  <Spark key="spark" size={86} className="text-teal" />,
+  <Spark key="spark" size={86} className="text-teal motion-safe:animate-twinkle" />,
   <Triskele key="tri" size={86} />,
 ];
 
@@ -31,9 +31,9 @@ export function PostCard({ post, index }: { post: PostSummary; index: number }) 
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className="flex flex-col overflow-hidden rounded-[14px] border border-gold/25 bg-panel text-parch hover:border-gold/60 hover:text-parch"
+      className="group flex flex-col overflow-hidden rounded-[14px] border border-gold/40 bg-panel text-parch transition duration-300 hover:-translate-y-1 hover:border-gold hover:text-parch hover:shadow-[0_12px_40px_rgba(226,178,92,0.12)]"
     >
-      <div className="relative flex h-[170px] items-center justify-center bg-void text-gold">
+      <div className="relative flex h-[170px] items-center justify-center overflow-hidden bg-void text-gold transition-transform duration-500 [&>svg]:transition-transform [&>svg]:duration-700 group-hover:[&>svg]:rotate-12 group-hover:[&>svg]:scale-110">
         {post.mainImage?.asset ? (
           <Image
             src={urlFor(post.mainImage).width(720).height(340).url()}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Cinzel_Decorative,
   Cormorant_Garamond,
@@ -34,6 +34,11 @@ const ogham = Noto_Sans_Ogham({
   variable: "--font-ogham",
   weight: "400",
 });
+
+export const viewport: Viewport = {
+  themeColor: "#14161d",
+  colorScheme: "dark",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -72,7 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <div className="mx-auto max-w-[1200px] px-8">
           <SiteHeader />
-          <main id="main">{children}</main>
+          <main id="main" tabIndex={-1}>{children}</main>
           <SiteFooter />
         </div>
       </body>

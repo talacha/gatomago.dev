@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { AUTHOR } from "@/lib/site";
 import { Triskele } from "./glyphs";
 
 export function SiteFooter() {
@@ -7,6 +9,18 @@ export function SiteFooter() {
         <Triskele size={28} className="text-gold" />
         <span className="font-display text-lg text-parch">Gato Mago</span>
       </div>
+      <nav aria-label="Footer" className="flex flex-wrap gap-x-6 text-base">
+        <Link href="/feed.xml" className="inline-flex min-h-11 min-w-11 items-center justify-center">
+          RSS
+        </Link>
+        <a
+          href={AUTHOR.linkedin}
+          rel="me noopener"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center"
+        >
+          LinkedIn
+        </a>
+      </nav>
       <div>© 2026 Juan Luis Villaseñor. All spells reserved.</div>
     </footer>
   );
