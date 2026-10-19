@@ -36,6 +36,25 @@ export type Seo = {
   noIndex?: boolean;
 };
 
+export type SimpleBlockContent = Array<{
+  children?: Array<{
+    marks?: Array<string>;
+    text?: string;
+    _type: "span";
+    _key: string;
+  }>;
+  style?: "normal";
+  listItem?: never;
+  markDefs?: Array<{
+    href?: string;
+    _type: "link";
+    _key: string;
+  }>;
+  level?: number;
+  _type: "block";
+  _key: string;
+}>;
+
 export type BlockContent = Array<
   | {
       children?: Array<{
@@ -70,21 +89,97 @@ export type BlockContent = Array<
     } & Code)
 >;
 
+export type Locale = {
+  _id: string;
+  _type: "locale";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  tag?: string;
+  default?: boolean;
+};
+
 export type Category = {
   _id: string;
   _type: "category";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  title?: string;
+  title?: InternationalizedArrayString;
   slug?: Slug;
-  description?: string;
+  description?: InternationalizedArrayText;
 };
+
+export type InternationalizedArrayText = Array<
+  {
+    _key: string;
+  } & InternationalizedArrayTextValue
+>;
 
 export type Slug = {
   _type: "slug";
   current?: string;
   source?: string;
+};
+
+export type InternationalizedArrayString = Array<
+  {
+    _key: string;
+  } & InternationalizedArrayStringValue
+>;
+
+export type InternationalizedArraySimpleBlockContentValue = {
+  _type: "internationalizedArraySimpleBlockContentValue";
+  value?: SimpleBlockContent;
+  language?: string;
+};
+
+export type InternationalizedArrayTextValue = {
+  _type: "internationalizedArrayTextValue";
+  value?: string;
+  language?: string;
+};
+
+export type InternationalizedArrayStringValue = {
+  _type: "internationalizedArrayStringValue";
+  value?: string;
+  language?: string;
+};
+
+export type InternationalizedArraySimpleBlockContent = Array<
+  {
+    _key: string;
+  } & InternationalizedArraySimpleBlockContentValue
+>;
+
+export type TranslationMetadata = {
+  _id: string;
+  _type: "translation.metadata";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  translations?: InternationalizedArrayReference;
+  schemaTypes?: Array<string>;
+};
+
+export type InternationalizedArrayReference = Array<
+  {
+    _key: string;
+  } & InternationalizedArrayReferenceValue
+>;
+
+export type PostReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "post";
+};
+
+export type InternationalizedArrayReferenceValue = {
+  _type: "internationalizedArrayReferenceValue";
+  value?: PostReference;
+  language?: string;
 };
 
 export type AuthorReference = {
@@ -107,6 +202,7 @@ export type Post = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
+  language?: string;
   title?: string;
   slug?: Slug;
   excerpt?: string;
@@ -163,24 +259,7 @@ export type Author = {
     crop?: SanityImageCrop;
     _type: "image";
   };
-  bio?: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }>;
+  bio?: InternationalizedArraySimpleBlockContent;
   linkedin?: string;
 };
 
@@ -292,9 +371,21 @@ export type Geopoint = {
 export type AllSanitySchemaTypes =
   | SanityImageAssetReference
   | Seo
+  | SimpleBlockContent
   | BlockContent
+  | Locale
   | Category
+  | InternationalizedArrayText
   | Slug
+  | InternationalizedArrayString
+  | InternationalizedArraySimpleBlockContentValue
+  | InternationalizedArrayTextValue
+  | InternationalizedArrayStringValue
+  | InternationalizedArraySimpleBlockContent
+  | TranslationMetadata
+  | InternationalizedArrayReference
+  | PostReference
+  | InternationalizedArrayReferenceValue
   | AuthorReference
   | CategoryReference
   | Post
@@ -313,7 +404,7 @@ export type AllSanitySchemaTypes =
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: POSTS_QUERY
-// Query: *[_type == "post" && defined(slug.current)] | order(publishedAt desc){   _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": categories[0]->title,  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop } }
+// Query: *[_type == "post" && language == $lang && defined(slug.current)] | order(publishedAt desc){   _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop } }
 export type POSTS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -334,14 +425,15 @@ export type POSTS_QUERY_RESULT = Array<{
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: POST_SLUGS_QUERY
-// Query: *[_type == "post" && defined(slug.current)]{ "slug": slug.current }
+// Query: *[_type == "post" && defined(language) && defined(slug.current)]{ "lang": language, "slug": slug.current }
 export type POST_SLUGS_QUERY_RESULT = Array<{
+  lang: string | null;
   slug: string | null;
 }>;
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: POST_QUERY
-// Query: *[_type == "post" && slug.current == $slug][0]{      _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": categories[0]->title,  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop },    _updatedAt,    body,    "wordCount": length(string::split(pt::text(body), " ")),    "categories": categories[]->title,    "seo": {      "title": coalesce(seo.title, title, ""),      "description": coalesce(seo.description, excerpt, ""),      "image": coalesce(seo.image, mainImage),      "noIndex": seo.noIndex == true    },    author->{ name, alias, linkedin, image }  }
+// Query: *[_type == "post" && language == $lang && slug.current == $slug][0]{      _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop },    _updatedAt,    body,    "wordCount": length(string::split(pt::text(body), " ")),    "categories": categories[]->{ "title": coalesce(title[_key == $lang][0].value, title[_key == "en"][0].value) }.title,    "seo": {      "title": coalesce(seo.title, title, ""),      "description": coalesce(seo.description, excerpt, ""),      "image": coalesce(seo.image, mainImage),      "noIndex": seo.noIndex == true    },    "translations": (*[_type == "translation.metadata" && references(^._id)][0].translations[].value->{      "lang": language,      "slug": slug.current    })[defined(slug) && lang != $lang],    author->{ name, alias, linkedin, image }  }
 export type POST_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -385,6 +477,10 @@ export type POST_QUERY_RESULT = {
       | null;
     noIndex: boolean | false;
   };
+  translations: Array<{
+    lang: string | null;
+    slug: string | null;
+  }> | null;
   author: {
     name: string | null;
     alias: string | null;
@@ -401,7 +497,7 @@ export type POST_QUERY_RESULT = {
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: RELATED_POSTS_QUERY
-// Query: *[_type == "post" && defined(slug.current) && slug.current != $slug]    | order(publishedAt desc)[0...2]{   _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": categories[0]->title,  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop } }
+// Query: *[_type == "post" && language == $lang && defined(slug.current) && slug.current != $slug]    | order(publishedAt desc)[0...2]{   _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop } }
 export type RELATED_POSTS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -422,7 +518,7 @@ export type RELATED_POSTS_QUERY_RESULT = Array<{
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: AUTHOR_QUERY
-// Query: *[_type == "author"][0]{ name, alias, linkedin, image, bio }
+// Query: *[_type == "author"][0]{    name,    alias,    linkedin,    image,    "bio": coalesce(bio[_key == $lang][0].value, bio[_key == "en"][0].value)  }
 export type AUTHOR_QUERY_RESULT = {
   name: string | null;
   alias: string | null;
@@ -434,49 +530,41 @@ export type AUTHOR_QUERY_RESULT = {
     crop?: SanityImageCrop;
     _type: "image";
   } | null;
-  bio: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }> | null;
+  bio: SimpleBlockContent | null;
 } | null;
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: FEED_QUERY
-// Query: *[_type == "post" && defined(slug.current) && seo.noIndex != true] | order(publishedAt desc){    title,    "slug": slug.current,    excerpt,    publishedAt,    _updatedAt,    "text": pt::text(body),    "category": categories[0]->title,    "authorName": author->name  }
+// Query: *[_type == "post" && defined(language) && defined(slug.current) && seo.noIndex != true]    | order(publishedAt desc){    _id,    title,    "lang": language,    "slug": slug.current,    excerpt,    publishedAt,    _updatedAt,    "text": pt::text(body),    "categoryTitles": categories[0]->title[]{ _key, value },    "authorName": author->name,    "translations": (*[_type == "translation.metadata" && references(^._id)][0].translations[].value->{      "lang": language,      "slug": slug.current    })[defined(slug)]  }
 export type FEED_QUERY_RESULT = Array<{
+  _id: string;
   title: string | null;
+  lang: string | null;
   slug: string | null;
   excerpt: string | null;
   publishedAt: string | null;
   _updatedAt: string;
   text: string;
-  category: string | null;
+  categoryTitles: Array<{
+    _key: string;
+    value: string | null;
+  }> | null;
   authorName: string | null;
+  translations: Array<{
+    lang: string | null;
+    slug: string;
+  }> | null;
 }>;
 
 // Query TypeMap
 declare global {
   interface SanityQueries {
-    '\n  *[_type == "post" && defined(slug.current)] | order(publishedAt desc){ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': POSTS_QUERY_RESULT;
-    '\n  *[_type == "post" && defined(slug.current)]{ "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "post" && slug.current == $slug][0]{\n    \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n,\n    _updatedAt,\n    body,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    "categories": categories[]->title,\n    "seo": {\n      "title": coalesce(seo.title, title, ""),\n      "description": coalesce(seo.description, excerpt, ""),\n      "image": coalesce(seo.image, mainImage),\n      "noIndex": seo.noIndex == true\n    },\n    author->{ name, alias, linkedin, image }\n  }\n': POST_QUERY_RESULT;
-    '\n  *[_type == "post" && defined(slug.current) && slug.current != $slug]\n    | order(publishedAt desc)[0...2]{ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': RELATED_POSTS_QUERY_RESULT;
-    '\n  *[_type == "author"][0]{ name, alias, linkedin, image, bio }\n': AUTHOR_QUERY_RESULT;
-    '\n  *[_type == "post" && defined(slug.current) && seo.noIndex != true] | order(publishedAt desc){\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    _updatedAt,\n    "text": pt::text(body),\n    "category": categories[0]->title,\n    "authorName": author->name\n  }\n': FEED_QUERY_RESULT;
+    '\n  *[_type == "post" && language == $lang && defined(slug.current)] | order(publishedAt desc){ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': POSTS_QUERY_RESULT;
+    '\n  *[_type == "post" && defined(language) && defined(slug.current)]{ "lang": language, "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
+    '\n  *[_type == "post" && language == $lang && slug.current == $slug][0]{\n    \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n,\n    _updatedAt,\n    body,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    "categories": categories[]->{ "title": coalesce(title[_key == $lang][0].value, title[_key == "en"][0].value) }.title,\n    "seo": {\n      "title": coalesce(seo.title, title, ""),\n      "description": coalesce(seo.description, excerpt, ""),\n      "image": coalesce(seo.image, mainImage),\n      "noIndex": seo.noIndex == true\n    },\n    "translations": (*[_type == "translation.metadata" && references(^._id)][0].translations[].value->{\n      "lang": language,\n      "slug": slug.current\n    })[defined(slug) && lang != $lang],\n    author->{ name, alias, linkedin, image }\n  }\n': POST_QUERY_RESULT;
+    '\n  *[_type == "post" && language == $lang && defined(slug.current) && slug.current != $slug]\n    | order(publishedAt desc)[0...2]{ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": coalesce(categories[0]->title[_key == $lang][0].value, categories[0]->title[_key == "en"][0].value),\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': RELATED_POSTS_QUERY_RESULT;
+    '\n  *[_type == "author"][0]{\n    name,\n    alias,\n    linkedin,\n    image,\n    "bio": coalesce(bio[_key == $lang][0].value, bio[_key == "en"][0].value)\n  }\n': AUTHOR_QUERY_RESULT;
+    '\n  *[_type == "post" && defined(language) && defined(slug.current) && seo.noIndex != true]\n    | order(publishedAt desc){\n    _id,\n    title,\n    "lang": language,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    _updatedAt,\n    "text": pt::text(body),\n    "categoryTitles": categories[0]->title[]{ _key, value },\n    "authorName": author->name,\n    "translations": (*[_type == "translation.metadata" && references(^._id)][0].translations[].value->{\n      "lang": language,\n      "slug": slug.current\n    })[defined(slug)]\n  }\n': FEED_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

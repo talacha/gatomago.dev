@@ -1,12 +1,11 @@
+import { defaultLocale, type Locale } from "@/i18n/config";
+
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.gatomago.dev").replace(
   /\/$/,
   "",
 );
 
 export const SITE_NAME = "Gato Mago";
-
-export const SITE_DESCRIPTION =
-  "Essays, charms and field notes by Juan Luis Villaseñor, known as Gato Mago: a candlelit study of magic, craft and curiosity.";
 
 export const AUTHOR = {
   name: "Juan Luis Villaseñor",
@@ -16,9 +15,21 @@ export const AUTHOR = {
 
 export const absoluteUrl = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
-export const OG_IMAGE = {
-  url: "/og-en.jpg",
+/** Path to a page in a language, e.g. localePath("es", "/posts/x") -> "/es/posts/x". */
+export const localePath = (lang: Locale, path = "") =>
+  `/${lang}${path === "/" ? "" : path}`;
+
+/** hreflang map for a set of translations, plus x-default pointing at the default locale. */
+export function hreflangs(urls: Partial<Record<Locale, string>>) {
+  const languages: Record<string, string> = { ...urls };
+  const fallback = urls[defaultLocale] ?? Object.values(urls)[0];
+  if (fallback) languages["x-default"] = fallback;
+  return languages;
+}
+
+export const ogImage = (lang: Locale, alt: string) => ({
+  url: `/og-${lang}.jpg`,
   width: 1200,
   height: 630,
-  alt: "Gato Mago: Discover the magic. A wizard cat in a patched hat holds a glowing orb.",
-};
+  alt,
+});

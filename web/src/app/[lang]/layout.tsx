@@ -5,10 +5,12 @@ import {
   Noto_Sans_Ogham,
   Spectral,
 } from "next/font/google";
+import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import "./globals.css";
+import { isLocale, locales, localeMeta, otherLocales } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
+import { localePath, ogImage, SITE_NAME, SITE_URL } from "@/lib/site";
+import "../globals.css";
 
 const cinzel = Cinzel_Decorative({
   variable: "--font-cinzel",
@@ -40,33 +42,50 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME}: Essays, charms and field notes`, template: `%s · ${SITE_NAME}` },
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  authors: [{ name: "Juan Luis Villaseñor", url: SITE_URL }],
-  creator: "Juan Luis Villaseñor",
-  alternates: {
-    canonical: "./",
-    types: { "application/rss+xml": "/feed.xml" },
-  },
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    locale: "en_US",
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    images: [OG_IMAGE],
-  },
-  twitter: { card: "summary_large_image", images: [OG_IMAGE] },
-  robots: { index: true, follow: true },
-};
+export function generateStaticParams() {
+  return locales.map((lang) => ({ lang }));
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+  const t = getDictionary(lang);
+  const image = ogImage(lang, t.meta.ogAlt);
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: t.meta.title, template: `%s · ${SITE_NAME}` },
+    description: t.meta.description,
+    applicationName: SITE_NAME,
+    authors: [{ name: "Juan Luis Villaseñor", url: SITE_URL }],
+    creator: "Juan Luis Villaseñor",
+    // Pages override these with their own language alternates.
+    alternates: {
+      canonical: "./",
+      types: { "application/rss+xml": `${localePath(lang)}/feed.xml` },
+    },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: localeMeta[lang].ogLocale,
+      alternateLocale: otherLocales(lang).map((l) => localeMeta[l].ogLocale),
+      title: SITE_NAME,
+      description: t.meta.description,
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", images: [image] },
+    robots: { index: true, follow: true },
+  };
+}
+
+export default async function RootLayout({ children, params }: LayoutProps<"/[lang]">) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+  const t = getDictionary(lang);
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${cinzel.variable} ${cormorant.variable} ${spectral.variable} ${ogham.variable}`}
     >
       <body className="min-h-screen overflow-x-hidden">
@@ -74,14 +93,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-gold focus:px-5 focus:py-2 focus:text-ink"
         >
-          Skip to content
+          {t.a11y.skip}
         </a>
         <div className="mx-auto max-w-[1200px] px-8">
-          <SiteHeader />
-          <main id="main" tabIndex={-1}>{children}</main>
-          <SiteFooter />
+          {children}
+          <SiteFooter lang={lang} t={t} />
         </div>
       </body>
     </html>
   );
 }
+

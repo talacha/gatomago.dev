@@ -1,33 +1,58 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PortableText } from "next-sanity";
 import { KnotDivider, Moon, Spark, Triskele } from "@/components/glyphs";
 import { JsonLd } from "@/components/json-ld";
 import { Newsletter } from "@/components/newsletter";
 import { meta, PostCard } from "@/components/post-card";
+import { SiteHeader } from "@/components/site-header";
 import { SparkleField } from "@/components/sparkle-field";
-import { absoluteUrl, AUTHOR, OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { isLocale, locales, localeMeta } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
+import { absoluteUrl, AUTHOR, hreflangs, localePath, ogImage, SITE_NAME } from "@/lib/site";
 import { getAuthor, getPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
 
-export const metadata: Metadata = {
-  title: { absolute: `${SITE_NAME}: Essays, charms and field notes by Juan Luis Villaseñor` },
-  description: SITE_DESCRIPTION,
-  alternates: { canonical: "/" },
-  openGraph: { url: "/", title: SITE_NAME, description: SITE_DESCRIPTION, images: [OG_IMAGE] },
-  twitter: { card: "summary_large_image", images: [OG_IMAGE] },
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+  const t = getDictionary(lang);
+  const image = ogImage(lang, t.meta.ogAlt);
+  return {
+    title: { absolute: t.meta.homeTitle },
+    description: t.meta.description,
+    alternates: {
+      canonical: localePath(lang),
+      languages: hreflangs(Object.fromEntries(locales.map((l) => [l, localePath(l)]))),
+      types: { "application/rss+xml": `${localePath(lang)}/feed.xml` },
+    },
+    openGraph: {
+      url: localePath(lang),
+      title: SITE_NAME,
+      description: t.meta.description,
+      locale: localeMeta[lang].ogLocale,
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", images: [image] },
+  };
+}
 
 const ctaPrimary =
   "inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink hover:shadow-[0_8px_30px_rgba(226,178,92,0.3)]";
 const ctaGhost =
   "inline-flex min-h-12 items-center rounded-full border-[1.5px] border-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-gold transition duration-300 hover:-translate-y-0.5 hover:bg-gold/10 hover:text-gold-light";
 
-export default async function HomePage() {
-  const [posts, author] = await Promise.all([getPosts(), getAuthor()]);
+export default async function HomePage({ params }: PageProps<"/[lang]">) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+  const t = getDictionary(lang);
+  const [posts, author] = await Promise.all([getPosts(lang), getAuthor(lang)]);
   const featured = posts.find((p) => p.featured) ?? posts[0];
   const rest = posts.filter((p) => p._id !== featured?._id);
 
+  const home = absoluteUrl(localePath(lang));
   const personId = absoluteUrl("/#person");
   const linkedin = author?.linkedin ?? AUTHOR.linkedin;
   const graph = {
@@ -35,11 +60,11 @@ export default async function HomePage() {
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": absoluteUrl("/#website"),
-        url: absoluteUrl("/"),
+        "@id": `${home}#website`,
+        url: home,
         name: SITE_NAME,
-        description: SITE_DESCRIPTION,
-        inLanguage: "en",
+        description: t.meta.description,
+        inLanguage: lang,
         publisher: { "@id": personId },
       },
       {
@@ -47,23 +72,23 @@ export default async function HomePage() {
         "@id": personId,
         name: author?.name ?? AUTHOR.name,
         alternateName: author?.alias ?? AUTHOR.alias,
-        url: absoluteUrl("/#about"),
+        url: `${home}#about`,
         image: absoluteUrl("/gato-mago.jpg"),
         sameAs: [linkedin],
       },
       {
         "@type": "Blog",
-        "@id": absoluteUrl("/#blog"),
-        url: absoluteUrl("/"),
+        "@id": `${home}#blog`,
+        url: home,
         name: SITE_NAME,
-        description: SITE_DESCRIPTION,
-        inLanguage: "en",
+        description: t.meta.description,
+        inLanguage: lang,
         author: { "@id": personId },
         publisher: { "@id": personId },
         blogPost: posts.map((p) => ({
           "@type": "BlogPosting",
           headline: p.title,
-          url: absoluteUrl(`/posts/${p.slug}`),
+          url: absoluteUrl(`${localePath(lang)}/posts/${p.slug}`),
           datePublished: p.publishedAt,
         })),
       },
@@ -73,6 +98,8 @@ export default async function HomePage() {
   return (
     <>
       <JsonLd data={graph} />
+      <SiteHeader lang={lang} t={t} />
+      <main id="main" tabIndex={-1}>
       <section className="relative flex flex-wrap items-center gap-x-14 gap-y-12 pb-22 pt-12 sm:pt-18">
         <SparkleField />
         <div className="relative min-w-0 flex-[1_1_440px]">
@@ -84,18 +111,20 @@ export default async function HomePage() {
             <span>ᚌᚐᚈᚑ ᚋᚐᚌᚑ</span>
           </div>
           <h1 className="mt-5 font-heading motion-safe:animate-reveal [animation-delay:120ms] text-[clamp(48px,7vw,76px)] font-semibold leading-none tracking-tight text-parch">
-            Dispatches from the <em className="text-gold">candlelit study</em>
+            {t.hero.titleLead} <em className="text-gold">{t.hero.titleEm}</em>
           </h1>
           <p className="mt-7 max-w-[520px] text-xl text-muted motion-safe:animate-reveal [animation-delay:240ms]">
-            Essays, charms and field notes by Juan Luis Villaseñor, known in these halls as Gato
-            Mago. Read by candlelight; no broomstick required.
+            {t.hero.sub}
           </p>
           <div className="mt-10 flex flex-wrap gap-4 motion-safe:animate-reveal [animation-delay:360ms]">
-            <Link href={featured ? `/posts/${featured.slug}` : "/#grimoire"} className={ctaPrimary}>
-              Read the latest
+            <Link
+              href={featured ? `${localePath(lang)}/posts/${featured.slug}` : `${localePath(lang)}#grimoire`}
+              className={ctaPrimary}
+            >
+              {t.hero.cta}
             </Link>
-            <Link href="/#circle" className={ctaGhost}>
-              Join the Circle
+            <Link href={`${localePath(lang)}#circle`} className={ctaGhost}>
+              {t.nav.circle}
             </Link>
           </div>
         </div>
@@ -103,7 +132,7 @@ export default async function HomePage() {
           <div className="rounded-[240px_240px_14px_14px] border-2 border-gold p-2.5 shadow-[0_0_90px_rgba(111,214,201,0.16)] motion-safe:animate-glow">
             <Image
               src="/gato-mago.jpg"
-              alt="Gato Mago, a grey cat in a patched wizard hat, holding a glowing crystal orb in a candlelit library"
+              alt={t.hero.imageAlt}
               width={1200}
               height={1200}
               priority
@@ -122,11 +151,11 @@ export default async function HomePage() {
           <div className="mb-7 flex items-center gap-4">
             <Moon size={22} className="text-gold" />
             <h2 className="font-display text-[22px] font-normal tracking-[0.12em] text-gold">
-              Freshly Inscribed
+              {t.featured.label}
             </h2>
           </div>
           <Link
-            href={`/posts/${featured.slug}`}
+            href={`${localePath(lang)}/posts/${featured.slug}`}
             className="group flex flex-wrap overflow-hidden rounded-[18px] border border-gold/40 bg-panel text-parch transition duration-300 hover:border-gold hover:text-parch hover:shadow-[0_12px_50px_rgba(226,178,92,0.12)]"
           >
             <div className="relative flex min-h-80 flex-[1_1_340px] items-center justify-center border-r border-gold/20 bg-void text-gold">
@@ -144,13 +173,13 @@ export default async function HomePage() {
             </div>
             <div className="flex flex-[1.4_1_420px] flex-col justify-center gap-4 p-8 sm:p-12">
               <div className="font-heading text-lg font-semibold uppercase tracking-[0.18em] text-gold">
-                {[featured.category, meta(featured)].filter(Boolean).join(" · ")}
+                {[featured.category, meta(featured, lang, t)].filter(Boolean).join(" · ")}
               </div>
               <h3 className="font-heading text-[clamp(32px,5vw,44px)] font-semibold leading-[1.1] text-parch">
                 {featured.title}
               </h3>
               {featured.excerpt && <p className="text-muted">{featured.excerpt}</p>}
-              <div className="font-heading text-xl font-semibold text-gold">Read the entry →</div>
+              <div className="font-heading text-xl font-semibold text-gold">{t.featured.cta}</div>
             </div>
           </Link>
         </section>
@@ -158,19 +187,17 @@ export default async function HomePage() {
 
       <section id="grimoire" className="scroll-mt-8 pb-24">
         <h2 className="mb-8 font-heading text-[clamp(34px,5vw,46px)] font-semibold leading-tight text-parch">
-          From the Grimoire
+          {t.grimoire.title}
         </h2>
         {rest.length > 0 ? (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-7">
             {rest.map((post, i) => (
-              <PostCard key={post._id} post={post} index={i} />
+              <PostCard key={post._id} post={post} index={i} lang={lang} t={t} />
             ))}
           </div>
         ) : (
           <p className="text-muted">
-            {posts.length === 0
-              ? "The grimoire is still being inscribed. Return soon."
-              : "More entries are on their way."}
+            {posts.length === 0 ? t.grimoire.empty : t.grimoire.more}
           </p>
         )}
       </section>
@@ -191,7 +218,7 @@ export default async function HomePage() {
             ) : (
               <Image
                 src="/gato-mago.jpg"
-                alt="Close portrait of Gato Mago, the grey cat in a wizard hat"
+                alt={t.about.portraitAlt}
                 width={600}
                 height={600}
                 className="h-full w-full rounded-full object-cover object-[52%_42%]"
@@ -204,12 +231,11 @@ export default async function HomePage() {
             ᚔᚒᚐᚅ ᚂᚒᚔᚄ
           </div>
           <h2 className="mt-3 font-heading text-[clamp(34px,5vw,46px)] font-semibold leading-[1.1] text-parch">
-            Behind the hat: {author?.name ?? "Juan Luis Villaseñor"}
+            {t.about.heading} {author?.name ?? AUTHOR.name}
           </h2>
-          <p className="mt-5 max-w-[620px] text-muted">
-            {/* Replace with author.bio via the Studio once written */}
-            Essays, charms and field notes from the candlelit study.
-          </p>
+          <div className="mt-5 flex max-w-[620px] flex-col gap-4 text-muted">
+            {author?.bio?.length ? <PortableText value={author.bio} /> : <p>{t.about.fallbackBio}</p>}
+          </div>
           <div className="mt-7 flex flex-wrap gap-6 font-heading text-[21px] font-semibold">
             <a
               href={
@@ -218,13 +244,14 @@ export default async function HomePage() {
               rel="me noopener"
               className="inline-flex min-h-11 items-center"
             >
-              LinkedIn →
+              {t.about.linkedin}
             </a>
           </div>
         </div>
       </section>
 
-      <Newsletter />
+      <Newsletter lang={lang} t={t} />
+      </main>
     </>
   );
 }

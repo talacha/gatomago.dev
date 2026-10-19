@@ -6,28 +6,45 @@ import { KnotDivider, Spark, Triskele } from "@/components/glyphs";
 import { JsonLd } from "@/components/json-ld";
 import { formatDate, PostCard } from "@/components/post-card";
 import { PortableTextBody } from "@/components/portable-text-body";
+import { SiteHeader } from "@/components/site-header";
 import { getPost, getPostSlugs, getRelatedPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
-import { absoluteUrl, AUTHOR, OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { isLocale, localeMeta, type Locale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
+import { absoluteUrl, AUTHOR, hreflangs, localePath, ogImage, SITE_NAME } from "@/lib/site";
 
 // Cache Components requires at least one param at build time; the placeholder
 // 404s via notFound() until the first post is published.
 export async function generateStaticParams() {
   const slugs = await getPostSlugs();
-  const params = slugs.flatMap((s) => (s.slug ? [{ slug: s.slug }] : []));
-  return params.length > 0 ? params : [{ slug: "_empty" }];
+  const params = slugs.flatMap((s) => (s.slug && s.lang ? [{ lang: s.lang, slug: s.slug }] : []));
+  return params.length > 0 ? params : [{ lang: "en", slug: "_empty" }];
+}
+
+type Translation = { lang: string | null; slug: string | null };
+
+/** Maps a post and its linked translations to { locale: path }. */
+function postPaths(lang: Locale, slug: string, translations: Translation[] | null | undefined) {
+  const paths: Partial<Record<Locale, string>> = { [lang]: `${localePath(lang)}/posts/${slug}` };
+  for (const t of translations ?? []) {
+    if (t.lang && t.slug && isLocale(t.lang)) paths[t.lang] = `${localePath(t.lang)}/posts/${t.slug}`;
+  }
+  return paths;
 }
 
 export async function generateMetadata({
   params,
-}: PageProps<"/posts/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
-  const post = await getPost(slug);
+}: PageProps<"/[lang]/posts/[slug]">): Promise<Metadata> {
+  const { lang, slug } = await params;
+  if (!isLocale(lang)) return {};
+  const t = getDictionary(lang);
+  const post = await getPost(lang, slug);
   if (!post) return {};
 
   const title = post.seo.title || post.title || SITE_NAME;
-  const description = post.seo.description || SITE_DESCRIPTION;
-  const url = `/posts/${slug}`;
+  const description = post.seo.description || t.meta.description;
+  const paths = postPaths(lang, slug, post.translations);
+  const url = paths[lang]!;
   const image = post.seo.image?.asset
     ? {
         url: urlFor(post.seo.image).width(1200).height(630).fit("crop").url(),
@@ -35,16 +52,21 @@ export async function generateMetadata({
         height: 630,
         alt: post.mainImage?.alt ?? title,
       }
-    : OG_IMAGE;
+    : ogImage(lang, t.meta.ogAlt);
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: hreflangs(paths),
+      types: { "application/rss+xml": `${localePath(lang)}/feed.xml` },
+    },
     robots: post.seo.noIndex ? { index: false, follow: true } : undefined,
     openGraph: {
       type: "article",
       url,
+      locale: localeMeta[lang].ogLocale,
       title,
       description,
       siteName: SITE_NAME,
@@ -58,19 +80,27 @@ export async function generateMetadata({
   };
 }
 
-export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
-  const { slug } = await params;
-  const [post, related] = await Promise.all([getPost(slug), getRelatedPosts(slug)]);
+export default async function PostPage({ params }: PageProps<"/[lang]/posts/[slug]">) {
+  const { lang, slug } = await params;
+  if (!isLocale(lang)) notFound();
+  const t = getDictionary(lang);
+  const [post, related] = await Promise.all([getPost(lang, slug), getRelatedPosts(lang, slug)]);
   if (!post) notFound();
+
+  const paths = postPaths(lang, slug, post.translations);
+  const otherVersions = (post.translations ?? []).filter(
+    (tr): tr is { lang: Locale; slug: string } => !!tr.slug && !!tr.lang && isLocale(tr.lang),
+  );
 
   const { author } = post;
   const category = post.categories?.[0];
   const readMinutes = post.readMinutes ? Math.max(1, post.readMinutes) : null;
   const personId = absoluteUrl("/#person");
-  const postUrl = absoluteUrl(`/posts/${slug}`);
+  const home = absoluteUrl(localePath(lang));
+  const postUrl = absoluteUrl(paths[lang]!);
   const image = post.seo.image?.asset
     ? urlFor(post.seo.image).width(1200).height(630).fit("crop").url()
-    : absoluteUrl(OG_IMAGE.url);
+    : absoluteUrl(ogImage(lang, t.meta.ogAlt).url);
 
   const graph = {
     "@context": "https://schema.org",
@@ -85,7 +115,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
         image: [image],
         datePublished: post.publishedAt,
         dateModified: post._updatedAt,
-        inLanguage: "en",
+        inLanguage: lang,
         wordCount: post.wordCount ?? undefined,
         articleSection: category ?? undefined,
         keywords: post.categories?.filter(Boolean).join(", ") || undefined,
@@ -94,16 +124,16 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
           "@id": personId,
           name: post.author?.name ?? AUTHOR.name,
           alternateName: post.author?.alias ?? AUTHOR.alias,
-          url: absoluteUrl("/#about"),
+          url: `${home}#about`,
           sameAs: [post.author?.linkedin ?? AUTHOR.linkedin],
         },
         publisher: { "@id": personId },
-        isPartOf: { "@id": absoluteUrl("/#blog") },
+        isPartOf: { "@id": `${home}#blog` },
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: SITE_NAME, item: absoluteUrl("/") },
+          { "@type": "ListItem", position: 1, name: SITE_NAME, item: home },
           { "@type": "ListItem", position: 2, name: post.title, item: postUrl },
         ],
       },
@@ -113,9 +143,14 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
   return (
     <>
       <JsonLd data={graph} />
+      <SiteHeader lang={lang} t={t} switchTo={paths} />
+      <main id="main" tabIndex={-1}>
       <article className="mx-auto max-w-[720px] pb-10 pt-18">
-        <Link href="/" className="inline-flex min-h-11 items-center font-heading text-[19px] font-semibold">
-          ← Back to the grimoire
+        <Link
+          href={`${localePath(lang)}#grimoire`}
+          className="inline-flex min-h-11 items-center font-heading text-[19px] font-semibold"
+        >
+          {t.post.back}
         </Link>
 
         <div className="mt-8 flex items-center gap-3 font-heading text-[17px] font-semibold uppercase tracking-[0.18em] text-gold">
@@ -123,15 +158,34 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
           <span>
             {category && <>{category} · </>}
             {post.publishedAt && (
-              <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+              <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, lang)}</time>
             )}
-            {readMinutes && ` · ${readMinutes} min read`}
+            {readMinutes && ` · ${readMinutes} ${t.post.minRead}`}
           </span>
         </div>
         <h1 className="mt-5 font-heading text-[clamp(40px,6vw,68px)] font-semibold leading-[1.02] tracking-tight text-parch">
           {post.title}
         </h1>
         {post.excerpt && <p className="mt-6 text-[22px] italic text-muted">{post.excerpt}</p>}
+
+        {otherVersions.length > 0 && (
+          <p className="mt-6 text-base text-muted">
+            {t.post.alsoIn}{" "}
+            {otherVersions.map((v, i) => (
+              <span key={v.lang}>
+                {i > 0 && ", "}
+                <Link
+                  href={`${localePath(v.lang)}/posts/${v.slug}`}
+                  lang={v.lang}
+                  hrefLang={v.lang}
+                  className="underline underline-offset-4"
+                >
+                  {localeMeta[v.lang].name}
+                </Link>
+              </span>
+            ))}
+          </p>
+        )}
 
         {author && (
           <div className="mt-9 flex items-center gap-4">
@@ -147,7 +201,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
               ) : (
                 <Image
                   src="/gato-mago.jpg"
-                  alt="Gato Mago"
+                  alt={t.hero.imageAlt}
                   width={112}
                   height={112}
                   className="size-full rounded-full object-cover object-[52%_42%]"
@@ -157,7 +211,9 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
             <div className="leading-snug">
               <div className="font-heading text-[21px] font-semibold text-parch">{author.name}</div>
               {author.alias && (
-                <div className="text-[15px] text-muted">writing as {author.alias}</div>
+                <div className="text-[15px] text-muted">
+                  {t.post.writingAs} {author.alias}
+                </div>
               )}
             </div>
           </div>
@@ -200,29 +256,32 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
         <div className="mt-12 flex flex-wrap items-center gap-6 rounded-2xl border border-gold/40 bg-panel p-8">
           <div className="flex-[1_1_280px]">
             <div className="font-heading text-[26px] font-semibold text-parch">
-              Enjoyed this entry?
+              {t.post.enjoyed}
             </div>
-            <div className="text-base text-muted">Get the next one by letter.</div>
+            <div className="text-base text-muted">{t.post.getNext}</div>
           </div>
           <Link
-            href="/#circle"
+            href={`${localePath(lang)}#circle`}
             className="inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink"
           >
-            Join the Circle
+            {t.nav.circle}
           </Link>
         </div>
       </article>
 
       {related.length > 0 && (
         <section className="pb-6 pt-14">
-          <h2 className="mb-7 font-heading text-4xl font-semibold text-parch">Keep reading</h2>
+          <h2 className="mb-7 font-heading text-4xl font-semibold text-parch">
+            {t.post.keepReading}
+          </h2>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-7">
             {related.map((p, i) => (
-              <PostCard key={p._id} post={p} index={i} />
+              <PostCard key={p._id} post={p} index={i} lang={lang} t={t} />
             ))}
           </div>
         </section>
       )}
+      </main>
     </>
   );
 }
