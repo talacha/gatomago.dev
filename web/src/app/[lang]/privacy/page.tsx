@@ -4,11 +4,12 @@ import { SiteHeader } from "@/components/site-header";
 import { isLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { privacy } from "@/i18n/privacy";
+import { newsletterEnabled } from "@/lib/features";
 import { AUTHOR, hreflangs, localePath } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/privacy">): Promise<Metadata> {
   const { lang } = await params;
-  if (!isLocale(lang)) return {};
+  if (!isLocale(lang) || !newsletterEnabled()) return {};
   return {
     title: privacy[lang].title,
     alternates: {
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/privacy">)
 
 export default async function PrivacyPage({ params }: PageProps<"/[lang]/privacy">) {
   const { lang } = await params;
-  if (!isLocale(lang)) notFound();
+  if (!isLocale(lang) || !newsletterEnabled()) notFound();
   const t = getDictionary(lang);
   const policy = privacy[lang];
   const email = process.env.PRIVACY_CONTACT_EMAIL?.trim();

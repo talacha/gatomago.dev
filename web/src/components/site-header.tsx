@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { locales, localeMeta, type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { newsletterEnabled } from "@/lib/features";
 import { localePath } from "@/lib/site";
 import { KnotDivider, Triskele } from "./glyphs";
 
@@ -45,12 +46,14 @@ export function SiteHeader({ lang, t, switchTo = {} }: Props) {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href={`${localePath(lang)}#circle`}
-              className="inline-flex min-h-11 items-center rounded-full border-[1.5px] border-gold px-4 text-gold transition-colors hover:bg-gold hover:text-ink sm:px-5"
-            >
-              {t.nav.circle}
-            </Link>
+            {newsletterEnabled() && (
+              <Link
+                href={`${localePath(lang)}#circle`}
+                className="inline-flex min-h-11 items-center rounded-full border-[1.5px] border-gold px-4 text-gold transition-colors hover:bg-gold hover:text-ink sm:px-5"
+              >
+                {t.nav.circle}
+              </Link>
+            )}
           </nav>
           <nav
             aria-label={t.a11y.language}

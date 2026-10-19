@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { newsletterEnabled } from "@/lib/features";
 import { AUTHOR, localePath } from "@/lib/site";
 import { Triskele } from "./glyphs";
 
@@ -18,12 +19,14 @@ export function SiteFooter({ lang, t }: { lang: Locale; t: Dictionary }) {
         >
           RSS
         </Link>
-        <Link
-          href={`${localePath(lang)}/privacy`}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center"
-        >
-          {t.footer.privacy}
-        </Link>
+        {newsletterEnabled() && (
+          <Link
+            href={`${localePath(lang)}/privacy`}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center"
+          >
+            {t.footer.privacy}
+          </Link>
+        )}
         <a
           href={AUTHOR.linkedin}
           rel="me noopener"

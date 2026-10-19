@@ -11,6 +11,7 @@ import { getPost, getPostSlugs, getRelatedPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
 import { isLocale, localeMeta, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { newsletterEnabled } from "@/lib/features";
 import { absoluteUrl, AUTHOR, hreflangs, localePath, ogImage, SITE_NAME } from "@/lib/site";
 
 // Cache Components requires at least one param at build time; the placeholder
@@ -253,20 +254,22 @@ export default async function PostPage({ params }: PageProps<"/[lang]/posts/[slu
           <KnotDivider className="max-w-[220px]" />
         </div>
 
-        <div className="mt-12 flex flex-wrap items-center gap-6 rounded-2xl border border-gold/40 bg-panel p-8">
-          <div className="flex-[1_1_280px]">
-            <div className="font-heading text-[26px] font-semibold text-parch">
-              {t.post.enjoyed}
+        {newsletterEnabled() && (
+          <div className="mt-12 flex flex-wrap items-center gap-6 rounded-2xl border border-gold/40 bg-panel p-8">
+            <div className="flex-[1_1_280px]">
+              <div className="font-heading text-[26px] font-semibold text-parch">
+                {t.post.enjoyed}
+              </div>
+              <div className="text-base text-muted">{t.post.getNext}</div>
             </div>
-            <div className="text-base text-muted">{t.post.getNext}</div>
+            <Link
+              href={`${localePath(lang)}#circle`}
+              className="inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink"
+            >
+              {t.nav.circle}
+            </Link>
           </div>
-          <Link
-            href={`${localePath(lang)}#circle`}
-            className="inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-gold-light hover:text-ink"
-          >
-            {t.nav.circle}
-          </Link>
-        </div>
+        )}
       </article>
 
       {related.length > 0 && (

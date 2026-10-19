@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { newsletterEnabled } from "@/lib/features";
 import { localePath } from "@/lib/site";
 import {
   confirmSubscription,
@@ -34,6 +35,8 @@ export async function subscribeAction(
   _previous: SubscribeState,
   formData: FormData,
 ): Promise<SubscribeState> {
+  if (!newsletterEnabled()) return { code: "error" };
+
   // Honeypot: real visitors never see or fill this field. Bots get a fake success.
   if (String(formData.get("website") ?? "").length > 0) return { code: "ok" };
 

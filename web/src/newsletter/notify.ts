@@ -1,5 +1,6 @@
 import "server-only";
 import { isLocale } from "@/i18n/config";
+import { newsletterEnabled } from "@/lib/features";
 import { absoluteUrl, localePath } from "@/lib/site";
 import { client } from "@/sanity/client";
 import { env } from "./config";
@@ -36,6 +37,7 @@ const POST_FOR_EMAIL = `*[_type == "post" && _id == $id][0]{
  */
 export async function announcePost(postId: string): Promise<AnnounceResult> {
   // Safety gates: nothing is sent until sending is deliberately switched on and compliant.
+  if (!newsletterEnabled()) return { status: "skipped", reason: "NEWSLETTER_ENABLED is not true" };
   if (env("NEWSLETTER_BROADCAST_ENABLED") !== "true") {
     return { status: "skipped", reason: "NEWSLETTER_BROADCAST_ENABLED is not true" };
   }

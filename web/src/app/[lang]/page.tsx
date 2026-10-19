@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SparkleField } from "@/components/sparkle-field";
 import { isLocale, locales, localeMeta } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { newsletterEnabled } from "@/lib/features";
 import { absoluteUrl, AUTHOR, hreflangs, localePath, ogImage, SITE_NAME } from "@/lib/site";
 import { getAuthor, getPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
@@ -123,9 +124,11 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             >
               {t.hero.cta}
             </Link>
-            <Link href={`${localePath(lang)}#circle`} className={ctaGhost}>
-              {t.nav.circle}
-            </Link>
+            {newsletterEnabled() && (
+              <Link href={`${localePath(lang)}#circle`} className={ctaGhost}>
+                {t.nav.circle}
+              </Link>
+            )}
           </div>
         </div>
         <div className="relative min-w-[280px] flex-[0_1_460px] motion-safe:animate-reveal [animation-delay:200ms]">
@@ -250,7 +253,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </div>
       </section>
 
-      <Newsletter lang={lang} t={t} />
+      {newsletterEnabled() && <Newsletter lang={lang} t={t} />}
       </main>
     </>
   );
