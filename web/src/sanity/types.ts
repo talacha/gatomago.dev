@@ -22,6 +22,20 @@ export type SanityImageAssetReference = {
   [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
 };
 
+export type Seo = {
+  _type: "seo";
+  title?: string;
+  description?: string;
+  image?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
+  noIndex?: boolean;
+};
+
 export type BlockContent = Array<
   | {
       children?: Array<{
@@ -114,6 +128,7 @@ export type Post = {
   publishedAt?: string;
   featured?: boolean;
   body?: BlockContent;
+  seo?: Seo;
 };
 
 export type SanityImageCrop = {
@@ -276,6 +291,7 @@ export type Geopoint = {
 
 export type AllSanitySchemaTypes =
   | SanityImageAssetReference
+  | Seo
   | BlockContent
   | Category
   | Slug
@@ -325,7 +341,7 @@ export type POST_SLUGS_QUERY_RESULT = Array<{
 
 // Source: ../web/src/sanity/queries.ts
 // Variable: POST_QUERY
-// Query: *[_type == "post" && slug.current == $slug][0]{      _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": categories[0]->title,  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop },    body,    "categories": categories[]->title,    author->{ name, alias, linkedin, image }  }
+// Query: *[_type == "post" && slug.current == $slug][0]{      _id,  title,  "slug": slug.current,  excerpt,  publishedAt,  featured,  "category": categories[0]->title,  "readMinutes": round(length(pt::text(body)) / 5 / 200),  mainImage{ asset, alt, caption, hotspot, crop },    _updatedAt,    body,    "wordCount": length(string::split(pt::text(body), " ")),    "categories": categories[]->title,    "seo": {      "title": coalesce(seo.title, title, ""),      "description": coalesce(seo.description, excerpt, ""),      "image": coalesce(seo.image, mainImage),      "noIndex": seo.noIndex == true    },    author->{ name, alias, linkedin, image }  }
 export type POST_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -342,8 +358,33 @@ export type POST_QUERY_RESULT = {
     hotspot: SanityImageHotspot | null;
     crop: SanityImageCrop | null;
   } | null;
+  _updatedAt: string;
   body: BlockContent | null;
+  wordCount: number;
   categories: Array<string | null> | null;
+  seo: {
+    title: string | "";
+    description: string | "";
+    image:
+      | {
+          asset?: SanityImageAssetReference;
+          media?: unknown;
+          hotspot?: SanityImageHotspot;
+          crop?: SanityImageCrop;
+          alt?: string;
+          caption?: string;
+          _type: "image";
+        }
+      | {
+          asset?: SanityImageAssetReference;
+          media?: unknown;
+          hotspot?: SanityImageHotspot;
+          crop?: SanityImageCrop;
+          _type: "image";
+        }
+      | null;
+    noIndex: boolean | false;
+  };
   author: {
     name: string | null;
     alias: string | null;
@@ -413,14 +454,29 @@ export type AUTHOR_QUERY_RESULT = {
   }> | null;
 } | null;
 
+// Source: ../web/src/sanity/queries.ts
+// Variable: FEED_QUERY
+// Query: *[_type == "post" && defined(slug.current) && seo.noIndex != true] | order(publishedAt desc){    title,    "slug": slug.current,    excerpt,    publishedAt,    _updatedAt,    "text": pt::text(body),    "category": categories[0]->title,    "authorName": author->name  }
+export type FEED_QUERY_RESULT = Array<{
+  title: string | null;
+  slug: string | null;
+  excerpt: string | null;
+  publishedAt: string | null;
+  _updatedAt: string;
+  text: string;
+  category: string | null;
+  authorName: string | null;
+}>;
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
     '\n  *[_type == "post" && defined(slug.current)] | order(publishedAt desc){ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': POSTS_QUERY_RESULT;
     '\n  *[_type == "post" && defined(slug.current)]{ "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "post" && slug.current == $slug][0]{\n    \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n,\n    body,\n    "categories": categories[]->title,\n    author->{ name, alias, linkedin, image }\n  }\n': POST_QUERY_RESULT;
+    '\n  *[_type == "post" && slug.current == $slug][0]{\n    \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n,\n    _updatedAt,\n    body,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    "categories": categories[]->title,\n    "seo": {\n      "title": coalesce(seo.title, title, ""),\n      "description": coalesce(seo.description, excerpt, ""),\n      "image": coalesce(seo.image, mainImage),\n      "noIndex": seo.noIndex == true\n    },\n    author->{ name, alias, linkedin, image }\n  }\n': POST_QUERY_RESULT;
     '\n  *[_type == "post" && defined(slug.current) && slug.current != $slug]\n    | order(publishedAt desc)[0...2]{ \n  _id,\n  title,\n  "slug": slug.current,\n  excerpt,\n  publishedAt,\n  featured,\n  "category": categories[0]->title,\n  "readMinutes": round(length(pt::text(body)) / 5 / 200),\n  mainImage{ asset, alt, caption, hotspot, crop }\n }\n': RELATED_POSTS_QUERY_RESULT;
     '\n  *[_type == "author"][0]{ name, alias, linkedin, image, bio }\n': AUTHOR_QUERY_RESULT;
+    '\n  *[_type == "post" && defined(slug.current) && seo.noIndex != true] | order(publishedAt desc){\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    _updatedAt,\n    "text": pt::text(body),\n    "category": categories[0]->title,\n    "authorName": author->name\n  }\n': FEED_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

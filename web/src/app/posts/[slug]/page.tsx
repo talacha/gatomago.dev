@@ -3,10 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { KnotDivider, Spark, Triskele } from "@/components/glyphs";
-import { meta, PostCard } from "@/components/post-card";
+import { JsonLd } from "@/components/json-ld";
+import { formatDate, PostCard } from "@/components/post-card";
 import { PortableTextBody } from "@/components/portable-text-body";
 import { getPost, getPostSlugs, getRelatedPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
+import { absoluteUrl, AUTHOR, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 // Cache Components requires at least one param at build time; the placeholder
 // 404s via notFound() until the first post is published.
@@ -22,12 +24,37 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return {};
+
+  const title = post.seo.title || post.title || SITE_NAME;
+  const description = post.seo.description || SITE_DESCRIPTION;
+  const url = `/posts/${slug}`;
+  const image = post.seo.image?.asset
+    ? {
+        url: urlFor(post.seo.image).width(1200).height(630).fit("crop").url(),
+        width: 1200,
+        height: 630,
+        alt: post.mainImage?.alt ?? title,
+      }
+    : { url: "/gato-mago.jpg", width: 1932, height: 1932, alt: "Gato Mago the wizard cat" };
+
   return {
-    title: post.title ?? undefined,
-    description: post.excerpt ?? undefined,
-    openGraph: post.mainImage?.asset
-      ? { images: [urlFor(post.mainImage).width(1200).height(630).url()] }
-      : undefined,
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: post.seo.noIndex ? { index: false, follow: true } : undefined,
+    openGraph: {
+      type: "article",
+      url,
+      title,
+      description,
+      siteName: SITE_NAME,
+      publishedTime: post.publishedAt ?? undefined,
+      modifiedTime: post._updatedAt,
+      authors: post.author?.name ? [post.author.name] : undefined,
+      tags: post.categories?.filter((c): c is string => !!c),
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }
 
@@ -37,10 +64,55 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
   if (!post) notFound();
 
   const { author } = post;
-  const eyebrow = [post.categories?.[0], meta(post)].filter(Boolean).join(" · ");
+  const category = post.categories?.[0];
+  const readMinutes = post.readMinutes ? Math.max(1, post.readMinutes) : null;
+  const personId = absoluteUrl("/#person");
+  const postUrl = absoluteUrl(`/posts/${slug}`);
+  const image = post.seo.image?.asset
+    ? urlFor(post.seo.image).width(1200).height(630).fit("crop").url()
+    : absoluteUrl("/gato-mago.jpg");
+
+  const graph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${postUrl}#article`,
+        mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+        url: postUrl,
+        headline: post.title,
+        description: post.seo.description || post.excerpt || undefined,
+        image: [image],
+        datePublished: post.publishedAt,
+        dateModified: post._updatedAt,
+        inLanguage: "en",
+        wordCount: post.wordCount ?? undefined,
+        articleSection: category ?? undefined,
+        keywords: post.categories?.filter(Boolean).join(", ") || undefined,
+        author: {
+          "@type": "Person",
+          "@id": personId,
+          name: post.author?.name ?? AUTHOR.name,
+          alternateName: post.author?.alias ?? AUTHOR.alias,
+          url: absoluteUrl("/#about"),
+          sameAs: [post.author?.linkedin ?? AUTHOR.linkedin],
+        },
+        publisher: { "@id": personId },
+        isPartOf: { "@id": absoluteUrl("/#blog") },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: SITE_NAME, item: absoluteUrl("/") },
+          { "@type": "ListItem", position: 2, name: post.title, item: postUrl },
+        ],
+      },
+    ],
+  };
 
   return (
     <>
+      <JsonLd data={graph} />
       <article className="mx-auto max-w-[720px] pb-10 pt-18">
         <Link href="/" className="inline-block py-2 font-heading text-[19px] font-semibold">
           ← Back to the grimoire
@@ -48,7 +120,13 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
 
         <div className="mt-8 flex items-center gap-3 font-heading text-[17px] font-semibold uppercase tracking-[0.18em] text-gold">
           <Spark size={16} />
-          <span>{eyebrow}</span>
+          <span>
+            {category && <>{category} · </>}
+            {post.publishedAt && (
+              <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+            )}
+            {readMinutes && ` · ${readMinutes} min read`}
+          </span>
         </div>
         <h1 className="mt-5 font-heading text-[clamp(40px,6vw,68px)] font-semibold leading-[1.02] tracking-tight text-parch">
           {post.title}

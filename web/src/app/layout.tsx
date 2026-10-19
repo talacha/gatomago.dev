@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const cinzel = Cinzel_Decorative({
@@ -35,9 +36,25 @@ const ogham = Noto_Sans_Ogham({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Gato Mago", template: "%s · Gato Mago" },
-  description:
-    "Essays, charms and field notes by Juan Luis Villaseñor, known as Gato Mago.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME}: Essays, charms and field notes`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: "Juan Luis Villaseñor", url: SITE_URL }],
+  creator: "Juan Luis Villaseñor",
+  alternates: {
+    canonical: "./",
+    types: { "application/rss+xml": "/feed.xml" },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -47,9 +64,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cinzel.variable} ${cormorant.variable} ${spectral.variable} ${ogham.variable}`}
     >
       <body className="min-h-screen overflow-x-hidden">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-gold focus:px-5 focus:py-2 focus:text-ink"
+        >
+          Skip to content
+        </a>
         <div className="mx-auto max-w-[1200px] px-8">
           <SiteHeader />
-          {children}
+          <main id="main">{children}</main>
           <SiteFooter />
         </div>
       </body>

@@ -47,6 +47,7 @@ export const post = defineType({
     }),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
     defineField({name: 'body', type: 'blockContent'}),
+    defineField({name: 'seo', type: 'seo'}),
   ],
   orderings: [
     {

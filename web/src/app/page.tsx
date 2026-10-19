@@ -1,10 +1,20 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { KnotDivider, Moon, Spark } from "@/components/glyphs";
+import { JsonLd } from "@/components/json-ld";
 import { Newsletter } from "@/components/newsletter";
 import { meta, PostCard } from "@/components/post-card";
+import { absoluteUrl, AUTHOR, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { getAuthor, getPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
+
+export const metadata: Metadata = {
+  title: { absolute: `${SITE_NAME}: Essays, charms and field notes by Juan Luis Villaseñor` },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: { url: "/", title: SITE_NAME, description: SITE_DESCRIPTION },
+};
 
 const ctaPrimary =
   "inline-flex min-h-12 items-center rounded-full bg-gold px-[30px] font-heading text-[21px] font-semibold tracking-wide text-ink hover:text-ink";
@@ -16,8 +26,51 @@ export default async function HomePage() {
   const featured = posts.find((p) => p.featured) ?? posts[0];
   const rest = posts.filter((p) => p._id !== featured?._id);
 
+  const personId = absoluteUrl("/#person");
+  const linkedin = author?.linkedin ?? AUTHOR.linkedin;
+  const graph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": absoluteUrl("/#website"),
+        url: absoluteUrl("/"),
+        name: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        inLanguage: "en",
+        publisher: { "@id": personId },
+      },
+      {
+        "@type": "Person",
+        "@id": personId,
+        name: author?.name ?? AUTHOR.name,
+        alternateName: author?.alias ?? AUTHOR.alias,
+        url: absoluteUrl("/#about"),
+        image: absoluteUrl("/gato-mago.jpg"),
+        sameAs: [linkedin],
+      },
+      {
+        "@type": "Blog",
+        "@id": absoluteUrl("/#blog"),
+        url: absoluteUrl("/"),
+        name: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        inLanguage: "en",
+        author: { "@id": personId },
+        publisher: { "@id": personId },
+        blogPost: posts.map((p) => ({
+          "@type": "BlogPosting",
+          headline: p.title,
+          url: absoluteUrl(`/posts/${p.slug}`),
+          datePublished: p.publishedAt,
+        })),
+      },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={graph} />
       <section className="flex flex-wrap items-center gap-14 pb-22 pt-18">
         <div className="min-w-0 flex-[1_1_440px]">
           <div

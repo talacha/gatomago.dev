@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { client } from "./client";
 import {
   AUTHOR_QUERY,
+  FEED_QUERY,
   POST_QUERY,
   POST_SLUGS_QUERY,
   POSTS_QUERY,
@@ -41,4 +42,11 @@ export async function getAuthor() {
   cacheLife("minutes");
   cacheTag("sanity");
   return client.fetch(AUTHOR_QUERY);
+}
+
+export async function getFeedPosts() {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("sanity");
+  return client.fetch(FEED_QUERY);
 }
