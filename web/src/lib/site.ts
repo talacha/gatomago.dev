@@ -15,3 +15,10 @@ export const AUTHOR = {
 };
 
 export const absoluteUrl = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+export const OG_IMAGE = {
+  url: "/og-en.jpg",
+  width: 1200,
+  height: 630,
+  alt: "Gato Mago: Discover the magic. A wizard cat in a patched hat holds a glowing orb.",
+};

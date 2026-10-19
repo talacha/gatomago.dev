@@ -4,7 +4,7 @@ Usage: python3 design/make-brand-assets.py <font-dir>
   <font-dir> must contain cinzel.ttf (Cinzel Decorative Bold), cormorant.ttf and
   cormorant-italic.ttf (Cormorant Garamond variable) and ogham.ttf (Noto Sans Ogham),
   all from github.com/google/fonts (OFL).
-Writes icons and the OG and Twitter images into web/src/app (plus web/public/icon-512.png).
+Writes icons into web/src/app, plus web/public/icon-512.png and web/public/og-en.jpg.
 """
 import math
 import sys
@@ -207,8 +207,8 @@ def og_card():
 def main():
     write_favicons()
     card = og_card()
-    card.save(APP / "opengraph-image.jpg", quality=90, optimize=True)
-    card.save(APP / "twitter-image.jpg", quality=90, optimize=True)
+    # Served from /public at a stable URL so pages can reference it explicitly with alt text.
+    card.save(ROOT / "web" / "public" / "og-en.jpg", quality=90, optimize=True)
     print("done")
 
 

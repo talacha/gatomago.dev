@@ -6,7 +6,7 @@ import { JsonLd } from "@/components/json-ld";
 import { Newsletter } from "@/components/newsletter";
 import { meta, PostCard } from "@/components/post-card";
 import { SparkleField } from "@/components/sparkle-field";
-import { absoluteUrl, AUTHOR, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, AUTHOR, OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { getAuthor, getPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
 
@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   title: { absolute: `${SITE_NAME}: Essays, charms and field notes by Juan Luis Villaseñor` },
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
-  openGraph: { url: "/", title: SITE_NAME, description: SITE_DESCRIPTION },
+  openGraph: { url: "/", title: SITE_NAME, description: SITE_DESCRIPTION, images: [OG_IMAGE] },
+  twitter: { card: "summary_large_image", images: [OG_IMAGE] },
 };
 
 const ctaPrimary =

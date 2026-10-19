@@ -8,7 +8,7 @@ import { formatDate, PostCard } from "@/components/post-card";
 import { PortableTextBody } from "@/components/portable-text-body";
 import { getPost, getPostSlugs, getRelatedPosts } from "@/sanity/data";
 import { urlFor } from "@/sanity/image";
-import { absoluteUrl, AUTHOR, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { absoluteUrl, AUTHOR, OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 // Cache Components requires at least one param at build time; the placeholder
 // 404s via notFound() until the first post is published.
@@ -35,7 +35,7 @@ export async function generateMetadata({
         height: 630,
         alt: post.mainImage?.alt ?? title,
       }
-    : { url: "/gato-mago.jpg", width: 1932, height: 1932, alt: "Gato Mago the wizard cat" };
+    : OG_IMAGE;
 
   return {
     title,
@@ -54,7 +54,7 @@ export async function generateMetadata({
       tags: post.categories?.filter((c): c is string => !!c),
       images: [image],
     },
-    twitter: { card: "summary_large_image", title, description, images: [image.url] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
@@ -70,7 +70,7 @@ export default async function PostPage({ params }: PageProps<"/posts/[slug]">) {
   const postUrl = absoluteUrl(`/posts/${slug}`);
   const image = post.seo.image?.asset
     ? urlFor(post.seo.image).width(1200).height(630).fit("crop").url()
-    : absoluteUrl("/gato-mago.jpg");
+    : absoluteUrl(OG_IMAGE.url);
 
   const graph = {
     "@context": "https://schema.org",
